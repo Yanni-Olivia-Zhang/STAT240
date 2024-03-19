@@ -1,0 +1,329 @@
+---
+title: "STAT240 Project - Shark Attacks"
+author: "Rohan, Yanni, Ziqi, Jiaqi"
+date: "5/02/2022"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r, include=FALSE}
+library(tidyverse)
+library(scales)
+library(egg)
+library(lubridate)
+library(graphics)
+library(kableExtra)
+```
+
+```{r, cached = T, include=FALSE}
+shark = read_csv("../data/SHARK_DATA.csv")%>%
+  mutate(Date=dmy(Date), Time=hm(Time))%>%
+  rename(Case="Case Number...1")%>%
+  rename(Fatal = "Fatal (Y/N)")
+
+shark1=shark%>%
+  mutate(Activity = str_to_lower(Activity))%>%
+  mutate(Activity = case_when(
+    str_detect(Activity, "fish")~"fishing",
+    str_detect(Activity, "crabbing")~"fishing",
+    str_detect(Activity, "clamming")~"fishing",
+    str_detect(Activity, "net")~"fishing",
+    str_detect(Activity, "boat")~"boating",
+    str_detect(Activity, "wreck")~"sea disaster",
+    str_detect(Activity, "sea disaster")~"sea disaster",
+    str_detect(Activity, "sank")~"sea disaster",
+    str_detect(Activity, "sunk")~"sea disaster",
+    str_detect(Activity, "clinging")~"sea disaster",
+    str_detect(Activity, "diving")~"diving",
+    str_detect(Activity, "bathing")~"bathing",
+    str_detect(Activity, "washing")~"bathing",
+    str_detect(Activity, "dived")~"diving",
+    str_detect(Activity, "rowing")~"rowing",
+    str_detect(Activity, "sculling")~"rowing",
+    str_detect(Activity, "fell")~"falling ",
+    str_detect(Activity, "floating")~"floating",
+    str_detect(Activity, "swimming")~"swimming",
+    str_detect(Activity, "treading water")~"swimming",
+    str_detect(Activity, "splashing")~"swimming",
+    str_detect(Activity, "shells")~"swimming",
+    str_detect(Activity, "jump")~"jumping",
+    str_detect(Activity, "surfing")~"surfing",
+    str_detect(Activity, "surfboard")~"surfing",
+    str_detect(Activity, "boarding")~"boarding",
+    str_detect(Activity, "paddle")~"paddling",
+    str_detect(Activity, "play")~"playing",
+    str_detect(Activity, "scuba")~"scuba",
+    str_detect(Activity, "snorkel")~"snorkeling",
+    str_detect(Activity, "air")~"air disaster",
+    str_detect(Activity, "plane")~"air disaster",
+    str_detect(Activity, "shark")~"direct interaction",
+    str_detect(Activity, "overboard")~"falling",
+    str_detect(Activity, "falling")~"falling",
+    str_detect(Activity, "skiing")~"water skiing",
+    str_detect(Activity, "wading")~"wading",
+    str_detect(Activity, "standing")~"wading",
+    str_detect(Activity, "walking")~"wading",
+    str_detect(Activity, "dangling feet in the water")~"wading",
+    str_detect(Activity, "canoe")~"personal watercraft",
+    str_detect(Activity, "kayak")~"personal watercraft",
+    str_detect(Activity, "cruising")~"personal watercraft",
+    str_detect(Activity, "paddling")~"personal watercraft",
+    str_detect(Activity, "watercraft")~"personal watercraft",
+    TRUE ~ Activity
+  ))%>%
+ 
+  mutate(Activity = case_when(str_detect(Activity, "paddling") ~ "personal watercraft",
+                              str_detect(Activity, "falling")~"falling",
+                              str_detect(Activity, "shrimping")~"fishing",
+                              str_detect(Activity, "sitting")~"wading",
+                              str_detect(Activity, "sailing")~"boating",
+                              str_detect(Activity, "racing")~"boating",
+                              str_detect(Activity, "sup") ~ "personal watercraft",
+                              
+                              TRUE ~ Activity)) %>%
+  group_by(Activity)%>%
+  summarize(n=n())%>%
+  filter(n>1) %>%
+  drop_na(Activity)
+
+shark
+```
+
+### Introduction: Shark Attacks
+
+##### Shark "attacks" in the wild are extremely rare, and accordingly, receive significant news coverage when they do occur. Maybe perhaps due to this we tend to overestimate the odds of an attack happenning to us when we go on vacation and take a swim in the ocean. Regardless, what many do not know is that shark "attacks" are much more nuanced than we may think. Factors such as how certain activites in the water are perceived by sharks, the geographic location of the occurence, and even the time of day play large roles in determinig whether or not a shark-related incident will occur. The impetus behind analyzing shark attack data comes from the curiosity we have surrounding these intelligent, powerful, and beautiful creatures and much more than that, how human-shark interaction can be made to be safer and more respectful in the future. After all, sharks have been the apex predators of the ocean for longer than human kind has walked the earth. 
+ 
+##### Our research team was particularly interested in three main questions:
+##### 1. Do men fall victim to provoked shark attacks at higher rates than women? 
+##### 2. What time of day are sharks most active? (i.e. when do the greatest number of unprovoked attacks occur?)
+##### 3. What are the most dangerous locations across the world for humans?
+
+##### Through careful data analysis, our research group asserts that (across multiple tests) American men are not only more likely to be attacked in general, but significantly more likely to provoke an attack and further, that most attacks occur while an indiviudal is fishing. While this conclusion may seem trivial now, our report follows a clear logic, providing evidence for our claim. 
+
+##### _______________________________________________________________________________________________________________
+
+### Background:
+
+##### Researchers have continued to study what causes shark attacks on humans for decades. It is worth studying shark-related incidents because the data provide a glimpse into the world of sharks and their behaviors. By understanding when and why shark attacks occur, it is possible to lessen the likelihood of these incidents occurring in the future. In our project, we will analyze the data to find relationships between shark behavior and the specific contexts in which incident occurred. We will use the data from the Global Shark Attack File, which is collected and updated by GSAF^[The Global Shark Attack File - GSAF]. 
+ 
+##### Sharks are considered an apex predator of the ocean and therefore should be resepcted as such. Any incident in which a shark causes harm to a human is considered an "attack" however, often these incidents occurr when a shark is disturbed, threatened, or curious about a human in the water. There is a need for humans to understand the inherent risk of entering an ecosystem carefully regulated by predation and the GSAF provides the necessary data to inform safer practices.
+
+##### Data has been collected by GSAF contributing scientists and investigators for decades, with more historical data coming from older records. In more recent years, GSAF investigators report to the scene of an incident, interviewing witnesses and collecting the neccesary information to add to the GSAF file. There have been over 6000 reported incidents since the mid 1600s and the log is updated with each new incident. To further clear up any misunderstanding, in the cases of both provoked and unprovoked attacks, a human in injured. Provoked attacks are attacks where an indivudal intentionally disturbs a shark's habitat or the shark itself (i.e. tagging). Unprovoked attacks occur when a shark causes harm without provocation of any sort, this may be out of curiosity for example.
+
+```{r, echo=FALSE}
+
+SharkData_variable = tibble(
+  Name = c("Case", "Date", "Type", "Country", "Activity", "Sex", "Species"),
+  Description = c("Case number for each incident",
+                  "Date of incident ",
+                  "Provoked or unprovoked incident",
+                  "Country where incident occurred",
+                  "Activity involved when incident occurred",
+                  "Sex of the victim, M or F",
+                  "Species of shark involved, if known"))
+
+SharkData_variable %>% 
+  kable(caption = "Key Variables From the Global Shark Attack File:") %>% 
+  kable_styling(position = "left", full_width = TRUE,
+                bootstrap_options = c("striped"))
+```
+
+##### Due to the many differences between our key questions, we will need numerous variables for our analysis, many of which are listed above. Additionally, we used binary variables "Provoked_YN" and "Fatal" to indicate if an incident was provoked and if an incident was fatal respectively. If "Provoked_YN" stores a value of "Y", the attack was provoked and "N" if unprovoked. Similarly, if "Fatal" evaluates to "Y" the attack resulted in a fatality and "N" if no fatality. More information about global shark attacks and the data set can be found on the [website](https://www.sharkattackfile.net/incidentlog.htm).
+
+
+
+##### For the remainder of the report will discuss the likelihood of attack given a number of activities, the sex of the individual involved, the time of day, and the location of the incident all in the attempt to inform safer practices in our possible interactions with sharks. 
+##### _______________________________________________________________________________________________________________
+### Analysis:
+
+##### The graph below provides a preliminary summary of shark attacks by the acitvity an individual was participating in, to give an idea of some of the most risky activites.
+```{r, echo=FALSE}
+shark2=shark1%>%
+  filter(Activity!="unknown", Activity!="lifesaving drill", Activity!=".")%>%
+  mutate(Activity = reorder(Activity, n))%>%
+  arrange(n)
+
+ggplot(shark2, aes(x=Activity, y=n))+geom_col(fill="Light blue")+
+  theme( axis.text.x = element_text(angle = 60, hjust=1))+
+  #scale_x_continuous()+
+  scale_y_continuous(breaks = c(100,300,500,700,900,1100,1300))+
+  xlab("Activity")+
+  ylab("Reported Cases")+
+  ggtitle("Reported Shark Attacks by Activity - Provoked and Unprovoked", subtitle="GSAF Data")
+
+```
+
+##### We can see that fishing (including shrimping, clamming, crabbing, along with standard fishing practices), surfing, swimming, and diving place an individual at the highest risk. Fishing related incidents account for over 1300 incidents, surfing with over 1200, swimming with slightly less than 1200, and diving with over 500 reported incidents. Surprisingly, there have also been 3 reported incidents of shark attacks on inmates attempting to swim across the San Francisco Bay while escaping from the infamous prison Alcatraz.
+
+##### _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+
+```{r, include=FALSE}
+shark3=shark%>%
+  mutate(Provoked_YN = if_else(Type=="Provoked", "Y", "N"))%>%
+  group_by(Provoked_YN, Sex)%>%
+  filter(Sex!=".", Sex!="lli", Sex!="M x 2", Sex!= "N", !is.na(Provoked_YN))%>%
+  summarize(count=n())%>%
+  mutate(prop=count/sum(count))
+
+shark3
+```
+
+##### 1. This bar chart depicts a comparison of proportions of provoked attacks by sharks on women (F) versus Men (M). In roughly 94% of provoked attacks, men are the victim (528 times out of 556 reported incidents).
+
+```{r, echo=FALSE}
+shark4=shark3%>%
+  filter(Provoked_YN == "Y")
+
+ggplot(shark4, aes(x=Sex, y=prop))+
+  geom_col(fill="Light Blue")+
+  xlab("Sex")+
+  ylab("Proportion")+
+  ggtitle("Comparison of Proportions of Provoked Attacks On Women v/s Men", subtitle="GSAF Data")
+```
+
+##### It is clear to see that men are much more likely to provoke an attack, however we need a test to provide evidence of this claim. We will conduct a one-tailed hypothesis test at a 5% level, testing whether the proportion of men involved in provoked incidents (p_m) is larger than 50% which would indicate that men fall victim to provoked attacks more than women. Our null assumes p_m is equal to 0.5 while our alternative conjectures that this proportion is actually greater than 0.5.
+
+$$
+H_0: p_m = 0.5 \\
+H_1: p_m > 0.5
+$$
+
+##### Here we assume a normal distribution and after conducting the test, find a test statistic of 21.2 and a final, statistically significant, p-value of 4.31e-100. Further analysis on the significance of this test will be discussed later in the report. 
+
+##### _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+```{r, include=FALSE}
+test_stat = 0.94964029	 - 0.5
+p0 = 0.5
+se = sqrt( p0*(1-p0)/556)
+z = test_stat / se
+pvalue_z = pnorm(-abs(z))
+pvalue_z
+```
+
+##### 2. The following chart and test attempt to answer our second question, regarding the most dangerous times of day - we do this by only including unprovoked attacks, to gain a better representation of pure shark activity, distinct from any human disturbance. In the chart, a full day is represented on the x-axis, and the number of attacks on the y-axis. 
+
+```{r, include=FALSE, warning=FALSE}
+shark5=shark%>%
+  mutate(Time2 = seconds(Time))%>%
+  mutate(ToD = case_when(
+    (Time2>0 &Time2<=28800) ~ "Morning",
+    (Time2>28800 & Time2<=57600) ~ "Afternoon",
+    (Time2>57600 & Time2<=86400) ~"Night"
+  ))%>%
+  drop_na(Time2)%>%
+  filter(Type=="Unprovoked")%>%
+  group_by(ToD, Time2)%>%
+  summarize(n=n())
+```
+```{r, echo=FALSE, message=FALSE}
+ggplot(shark5, aes(x=Time2, y=n))+
+  geom_col(aes(color=ToD, fill=ToD))+
+  geom_point(size=0.25)+
+  geom_smooth(color="black", se=FALSE, size=0.75)+
+  xlab("Time of Day")+
+  scale_x_continuous(breaks = c(0, 28800, 57600, 86400), labels = c("12am", "8am", "4pm", "Midnight"))+
+  ylab("Number of Attacks")+
+  ggtitle("Reported Cases of Unprovoked Attacks - By Time of Day", subtitle="GSAF Data")
+```
+
+##### As the graph shows, afternoon times of day (8am to 4pm, and specifically 11am) see the highest number of unprovoked attacks in comparison to early morning (12am-8am) and evening (4pm-Midnight). This is further depicted by the smooth black trend line across the graph. However, to be convinced of this we need to conduct yet another one-tailed hypothesis test at a 5% level, testing whether the proportion of attacks that occur in the afternoon (found to be 68% and denoted by p_a) is significantly larger than what we would expect otherwise (33% - three times of day). Our null in this case assumes p_a is equal to 1/3 while our alternative assumes p_a is larger than 1/3. In the legend, ToD refers to "Time of Day".
+
+$$
+H_0: p_a = 0.333 \\
+H_1: p_a > 0.333
+$$
+
+##### Here we assume a normal distribution and after conducting the test, find a test statistic of 35.133 and a final, statistically significant, p-value of 1.04e-270. Further discussion is included later in the report. 
+
+##### _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _  
+
+
+
+```{r, include=FALSE}
+#proportion test for counts in each group
+#is prop(afternoon) > 0.33?
+
+shark5%>%
+  summarize(total=sum(n), prop=total/2237)
+
+```
+```{r, include=FALSE}
+test_stat = 0.68350469 - 0.33333333
+p0 = 1/3
+se = sqrt(p0*(1-p0)/2237)
+z = test_stat / se
+pvalue_z = pnorm(-abs(z))
+pvalue_z
+```
+
+##### 3. Our last graphic gives evidence to our third question, where in the world are we not only in the most danger, but where are the sharks the most deadly? The bar chart below shows that Australia, the Bahamas, Papua New Guinea, South Africa, and the U.S. are the five most dangerous countries.
+
+
+```{r, include=FALSE}
+shark6 = shark%>%
+  filter(Type=="Provoked"| Type=="Unprovoked", Country=="USA" |Country=="AUSTRALIA" | Country=="SOUTH AFRICA" | Country == "PAPUA NEW GUINEA" | Country =="BAHAMAS")%>%
+  filter(Fatal=="Y" | Fatal=="N")%>%
+  group_by(Country, Fatal)%>%
+  summarize(n=n())%>%
+  drop_na()
+```
+
+```{r, echo=FALSE}
+
+positions = c("BAHAMAS", "PAPUA NEW GUINEA", "SOUTH AFRICA", "USA", "AUSTRALIA")
+ggplot(shark6, aes(x=Country, y=n))+
+  scale_x_discrete(limits = positions)+
+  geom_col(aes(fill=Fatal))+
+  xlab("Country")+
+  ylab("Number of Attacks")+
+  ggtitle("Top 5 Most Dangerous Countries - Fatal and Non-Fatal Attacks", subtitle="GSAF Data")+
+  theme( axis.text.x = element_text(angle = 50, hjust=1))
+```
+
+##### Further, the bars are segmented by fatality. Even though more attacks are reported in the U.S., Australia is home to the deadliest sharks. 
+
+##### _______________________________________________________________________________________________________________
+
+
+### Discussion:
+
+#### Interpretation of Results:
+
+##### 1. P-values give us a probability that we observe results at least as extreme as results actually observed, under the assumption that our null hypothesis holds. Accordingly, smaller p-values give larger evidence against the null; with our p-value of 4.31e-100, we have very strong evidence to reject the null. At a 5% level, we were able to reject our null hypothesis and conclude the alternative that the proportion of men who fall victim to provoked attacks is greater than 50%. This indicates to us that men are more likely to provoke an attack than women and consequently get injured.
+
+##### 2. At a 5% level, we were able to reject our null hypothesis and conclude the alternative that the proportion of attacks that occur during afternoon times of day is significantly greater than in the morning or evening (different than what we would expect the proportion to be, 33%). This affirms what our graph shows us about the activity of sharks and also shows an interesting trend. We might be able to infer here that those who venture out into the water between 8am and 4pm are at a higher risk of attack due to heightened shark activity. 
+
+##### 3. No statistical test was done for our third question, however our findings are that while the U.S. is the home of the most reported attacks, Australia in fact had the most deadly sharks, accounting for a higher percentage of fatal attacks. Australia's sharks are resposnible for killing humans more often than their counterparts in the U.S., so fisherman, surfers, and anyone interested in spending time in or on the water off the coast of Australia should take more drastic precautions to protect themselves against a shark. 
+
+##### Our trivial claim from earlier in the report holds. We found that fishing is the activity that places an individual at a disporportinately higher risk of attack, men are significantly more likely to provoke an attack, 11am is the most likely time of day for an attack to occur, and the U.S sees the most attacks. 
+
+##### _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _  
+
+#### Short-Comings of Analysis:
+
+##### Our data is an accrued list of cases dating back to the 1600s meaning that informal record keeping makes much of that historical data unusable due to its inconsistency in reporting. Further, our data was riddled with missing values of Sex, Location, etc. meaning we had to drop hundereds of data points throughout the analysis, biasing our results for much of our questions. Bias also showed up most notably in our third key question where we find that the U.S. is home to the greatest number of attacks, because our data has been disporportionately collected from the United States. In our second key question it is worth mentioning that though we find afternoon times of day to be the most deadly, this may actually be a result of higher water activity at those times. We did not control for the number of individual on the water and therefore our results may be skewed.
+
+##### _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _  
+
+#### Future Directions:
+
+##### We had a lot of fun working with the GSAF data set and have proposals for future work. One new question may be to consider what species of sharks are the most deadly. This would be an interesting follow up question to our last analysis; we know that Australia has the dealiest sharks...do those sharks overlap in their species? Are great whites to blame? In addition to this new question, a new method that we think could be employed would be a more robust time-series analysis for our second key question: using multiple regression models for varing times of day. This would give us a better picture of the trends in attacks as the sun rises and falls. We also found that there were variables and/or new data that would allow us to explore more intriguing questions. For example, in order to more deeply dig into the types of incidents, it may be interesting to have a severity of injury scale, ranging from 1-5. This way, we can further group our data by severity opening up possibilities to isolate more minute trends.
+
+##### _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _  
+
+#### Summary:
+
+##### We have concluded that fishing places an individual at the highest risk of attack; men are more likely to provoke an attack by a shark; afteroon, 8am-4pm, is the most likely time for an incident to occur; Australia is home to the deadliest sharks while the U.S has the highest number of reported cases.
+
+##### We backed these conclusions up with graphical and statistical analysis including single-tailed hypothesis tests of proportions at a 5% level.
+
+##### Ultimately, we have formatted shark attack data into a digestible report that highlights several factors that come into play when determining if a shark attack occurs or not. In the end, we hope that this analysis educates the public on their risks when in area where sharks may be present, thereby influencing their choices to have as safe as an outcome as possible, while still enjoying the natural beauty of our oceans. 
+
+##### _______________________________________________________________________________________________________________
+
+### References

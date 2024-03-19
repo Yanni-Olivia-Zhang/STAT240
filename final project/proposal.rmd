@@ -1,0 +1,50 @@
+---
+output: html_document
+---
+
+#### Group Members:
+> Rohan Shah, Yanni Zhang, Ziji Li, Jiaqi Wu
+
+#### Communication Plan:
+1. Our group will communicate mainly through text, and meet at discussion sections
+2. We will continue to work on project specific items collaboratively through google drive including the proposal and the draft
+3. For the project draft, we will divy up work amongst each other and tentatively plan to work together in person on Wednesday’s immediately following discussion section
+
+#### Questions of Interest:
+1. How do shark attacks vary across ***geographical locations***? Are there regions that are more dangerous than others?
+2. Is there a difference in the frequency of ***unprovoked*** versus ***provoked*** attacks? What percentage of fatal attacks are provoked v/s unprovoked?
+3. Do ***men*** fall victim to provoked shark attacks at higher rates than ***women***?
+4. Are some shark ***species*** prone to exhibit more aggressive behavior as evidenced by attacks stratified by species, fatal attacks, and/or type of attack? What species of shark is the ***deadliest***?
+5. What ***activity*** places an individual in the most danger of an attack? A fatal attack?
+6. What locations/seasons see the highest rates of attacks? 
+   + Ex: is it a safer bet to swim in Brazil in the summer or in Australia?
+7. Are shark attacks correlated with ***time of day***? When are sharks most active?
+  
+#### Data Source:
+Global Shark Attack File (GSAF)
+https://www.sharkattackfile.net/incidentlog.htm
+
+#### Data Description:
+1. The shark attack data set is a comprehensive and continuously updated log of shark-related incidents involving humans dating back to the 1850s. The file is curated by a group of independent researchers and investigators who are dedicated not only to the conservation of marine life but also to the creation of scientific data to inform public safety protocols and decisions. 
+2. “The Global Shark Attack File was created to provide medical personnel, shark behaviorists, lifesavers, and the media with meaningful information resulting from the scientific forensic examination of shark accidents” - GSAF
+3. After a shark-related incident, researchers investigate and report their findings, sometimes interviewing victims and medical personnel.
+4. Key Variables include…
+   + Case Number (code for uniquely identifying reports)
+   + Date (date of incident, ex: “16-Feb-2022”)
+   + Type (provoked or unprovoked)
+   + Country
+   + Activity (ex: Swimming)
+   + Sex (M or F)
+   + Injury (description of injury, ex: “puncture wounds to foot”)
+   + Time (ex: 16h30)
+   + Species (ex: White Shark)
+5. The file is in xls format and contains 6735 rows and 16 columns
+
+#### Graph:
+A graph that may be included to answer a key question would be a time series graph depicting time of day on the x-axis and number of attacks on the y-axis. Two different lines can be used to indicate if the attack was provoked or unprovoked. This is a representation of shark activity over the course of a day and can highlight times where an attack is most likely to occur. 
+
+#### Methods:
+1. Hypothesis test of a difference in proportions between men and women (see question of interest #3)
+   + Confidence Interval                                                    
+2. Prediction model to predict number of unprovoked attacks resulting in fatalities in the next year
+                                                                        
